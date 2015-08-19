@@ -31,7 +31,9 @@ public class GridSelector : MonoBehaviour {
 	void Update () {
 		Ray ray = mouseCamera.ScreenPointToRay(Input.mousePosition);
 		RaycastHit rh;;
-
+		if(GameManager.REF.selectedTowerPrefab==null&&this.overlay.isActiveAndEnabled) {
+			this.drawOverlay(false);
+		}
 		Debug.DrawRay(ray.origin,ray.direction,Color.red);
 		if(Physics.Raycast(ray.origin,ray.direction,out rh,mouseCamera.transform.position.y*2f)) {
 		
@@ -70,7 +72,7 @@ public class GridSelector : MonoBehaviour {
 					Destroy(towerBeingPlaced);
 					towerBeingPlaced = null;
 				}
-				if(lastObjectHovered.name=="Terrain") {
+				if(lastObjectHovered!=null&&lastObjectHovered.name=="Terrain") {
 					GameObject b = buildTower((int) lastMousePoint.x,(int) lastMousePoint.z);
 				} else {
 					WWTD_Tower t = lastObjectHovered.GetComponent<WWTD_Tower>();

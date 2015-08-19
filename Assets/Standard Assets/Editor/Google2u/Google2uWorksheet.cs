@@ -936,6 +936,9 @@ namespace Google2u
                     break;
                 case ExportType.StaticDatabase:
                 {
+				if(_StaticDbPath==null) {
+					_StaticDbPath = "Assets/Google2uGen/ObjDB/Resources/"; 
+			}
                     var respath = Path.Combine(_StaticDbPath, WorksheetName).Replace('\\', '/');
                     Google2u.ExportStaticDB(this, respath, WorksheetName, MyWorkbook.ExportOptions);
                     break;

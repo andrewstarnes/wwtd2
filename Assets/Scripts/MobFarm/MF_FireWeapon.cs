@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using TowerScripts;
 using Google2u;
+using Creep;
 
 public class MF_FireWeapon : MonoBehaviour {
 	
@@ -44,6 +45,11 @@ public class MF_FireWeapon : MonoBehaviour {
 	bool losClear;
 	bool error;
 	
+
+	public ETargetType slowType;
+	public int slowTime;
+	public float slowPercent;
+
 	[System.Serializable]
 	public class GunExit {
 		public Transform transform;
@@ -107,6 +113,17 @@ public class MF_FireWeapon : MonoBehaviour {
 		p.damageToInflict = aData._BulletDamage;
 		p.infantryDamageMultiplier = aData._BulletInfantryModifier;
 		p.tankInfantryMultiplier = aData._BulletArmorModifier;
+		
+		switch(aData._SlowTarget) {
+			default:this.slowType = ETargetType.None;break;
+			case("Infantry"):this.slowType = ETargetType.Infantry;break;
+			case("Mechanical"):this.slowType = ETargetType.Mechanical;break;
+			case("FlyingMechanical"):this.slowType = ETargetType.FlyingMechanical;break;
+			case("AnyMechanical"):this.slowType = ETargetType.AnyMechanical;break;
+		}
+		p.slowPercent = aData._BulletSlowPercent;
+		p.slowTime = aData._BulletSlowTime;
+		p.slowType = this.slowType;
 
 	}  
 	// use to determine if weapon is ready to fire. (not realoding, waiting for cycleTime, etc.) Seperate function to allow other scripts to check ready status.

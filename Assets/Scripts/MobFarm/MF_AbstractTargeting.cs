@@ -29,9 +29,11 @@ public abstract class MF_AbstractTargeting : MonoBehaviour {
 			}
 		} else { // if null, choose self to look for turret script
 			if ( gameObject.GetComponent<MF_AbstractPlatform>() ) {
+				receivingObject = gameObject;
 				receivingObjectScript = gameObject.GetComponent<MF_AbstractPlatform>();
 			} else { // if null, choose root gameObject to look for turret script
 				if ( transform.root.GetComponent<MF_AbstractPlatform>() ) {
+					receivingObject = transform.root.gameObject;
 					receivingObjectScript = transform.root.GetComponent<MF_AbstractPlatform>();
 				} else {
 					Debug.Log(_object+": No receiving object script found."); error = true;

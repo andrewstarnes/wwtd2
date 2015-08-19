@@ -55,11 +55,17 @@ namespace InterfaceManage
 				hideShowTowers.text = "SHOW TOWERS";
 			}
 		}
+		public void deselectAllTowers() {
+			for(int i = 0;i<this.towerButtons.Length;i++) {
+				towerButtons[i].GetComponent<UIButton>().defaultColor = regColor;
+			}
+		}
 		private void selectTower(int aTowerIndex) {
 			for(int i = 0;i<this.towerButtons.Length;i++) {
 				towerButtons[i].GetComponent<UIButton>().defaultColor = regColor;
 			}
 			GameManager.REF.selectedTowerPrefab = towerPrefabs[aTowerIndex];
+			GridSelector.REF.drawOverlay(true);
 			towerButtons[aTowerIndex].GetComponent<UIButton>().defaultColor = selectedColor;
 		}
 		public void onBuyBasic() {

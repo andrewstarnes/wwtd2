@@ -75,13 +75,13 @@ public class MF_LaserProjectile : MF_BasicProjectile {
 			this.GetComponent<Trail>().Update();
 			// cast a ray to check hits along path - compensating for fast animation
 			RaycastHit hit = default(RaycastHit);
-			if ( Physics.Raycast(transform.position, GetComponent<Rigidbody>().velocity, out hit, GetComponent<Rigidbody>().velocity.magnitude * Time.fixedDeltaTime, ~(1<<11) ) ) {
+			if ( Physics.SphereCast(transform.position,this.bulletThickness,GetComponent<Rigidbody>().velocity,out hit,GetComponent<Rigidbody>().velocity.magnitude * Time.fixedDeltaTime, ~(1<<11))) {
 				blastObjectPool.TryGetNextObject(hit.point,Quaternion.identity);
 				if(hit.collider.name=="Terrain") {
 					duration += 1f;
 					GetComponent<Rigidbody>().velocity = Vector3.zero;
 					ending = true;
-					m.enabled = false;
+					m.enabled = false; 
 				} else
 				DoHit( hit.collider.gameObject ); 
 			}

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
-using TowerScripts;
 using Google2u;
+using Creep;
 
 public class MF_BasicWeapon : MonoBehaviour {
 
@@ -29,6 +29,8 @@ public class MF_BasicWeapon : MonoBehaviour {
 	[Tooltip("Multiple shots per fire command. (Like a shotgun blast.)")]
 	public int shotsPerRound = 1;
 	[Header("Ammo settings")]
+	public int maxAmmoCount; 
+	public bool unlimitedAmmo;
 	[Tooltip("Triggered when Max Ammo Count is 0.")]
 	public float reloadTime;
 	public bool dontReload;
@@ -39,12 +41,6 @@ public class MF_BasicWeapon : MonoBehaviour {
 	[Tooltip("If multiple exits, they will be used sequentially. (Usefull for a missile rack, or multi-barrel weapons)")]
 	public GunExit[] exits;
 
-
-	public float damage = 0f;
-	public float splashRange = 0f;
-	public float splashDamage = 0f;
-
-	public NozzleRecoilBase recoiler;
 	[HideInInspector] public Vector3 platformVelocity;
 	[HideInInspector] public int curAmmoCount;
 	[HideInInspector] public int curBurstCount;
@@ -54,7 +50,12 @@ public class MF_BasicWeapon : MonoBehaviour {
 	float delay;
 	float lastLosCheck;
 	bool losClear;
+	bool useGravity;
 	bool error;
+
+	public int slowTime;
+	public float slowPercent;
+	public ETargetType slowType;
 
 	[System.Serializable]
 	public class GunExit {
@@ -64,29 +65,63 @@ public class MF_BasicWeapon : MonoBehaviour {
 	}
 
 	void OnValidate() {
-		curInaccuracy = inaccuracy;
+		Initialize();
 	}
-	
 
-	public void initTower(TowerListRow aData) {
-		this.damage = aData._BulletDamage;
-		this.splashRange = aData._BulletSplashRange; 
-		this.splashDamage = aData._BulletSplash; 
-		this.burstAmount = aData._BurstAmount;
-		this.burstResetTime = aData._BurstResetTime;
-		this.cycleTime = aData._CycleTime;
-		this.maxRange = aData._MaxRange;
-		this.reloadTime = aData._ReloadTime;
-		this.shotSpeed = aData._ShotSpeed; 
-		this.shotsPerRound = aData._ShotsPerRound; 
-	}
-	public void Start () { 
-		if(this.shot.ID==0) {
-			this.shot = FastPoolManager.GetPool(this.shotPrefab,true);
+	public void Initialize () { // call this method if shot prefab changes, or if shotSpeed, maxRange, or shotDurarion change
+		curInaccuracy = inaccuracy; // initialize
+
+		// compute missing value: shotSpeed, maxRange, shotDuration
+		if (shotSpeed <= 0) {
+			shotSpeed = maxRange / shotDuration;
+		} else if (maxRange <= 0) {
+			maxRange = shotSpeed * shotDuration;
+		} else { // compute shotDuration even if all 3 are set to keep math consistant
+			shotDuration = maxRange / shotSpeed;
 		}
-	
+	}
+	public void initTower(WWTD_Tower aTower) {
+		shotSpeed = aTower.rowData._ShotSpeed;
+		this.shotsPerRound = aTower.rowData._ShotsPerRound;
+		this.burstAmount = aTower.rowData._BurstAmount;
+		this.burstResetTime = aTower.rowData._BurstResetTime;
+		this.cycleTime = aTower.rowData._CycleTime;
+		this.maxRange = aTower.rowData._MaxRange;
+		this.reloadTime = aTower.rowData._ReloadTime;
+	}
+	public void initTower(TowerListRow aTower) {
+		shotSpeed = aTower._ShotSpeed;
+		this.shotsPerRound = aTower._ShotsPerRound;
+		this.burstAmount = aTower._BurstAmount;
+		this.burstResetTime = aTower._BurstResetTime;
+		this.cycleTime = aTower._CycleTime;
+		this.maxRange = aTower._MaxRange;
+		this.reloadTime = aTower._ReloadTime;
+		this.slowPercent = aTower._BulletSlowPercent;	
+		this.slowTime = aTower._BulletSlowTime;
+
+		switch(aTower._SlowTarget) {
+			default:this.slowType = ETargetType.None;break;
+			case("Infantry"):this.slowType = ETargetType.Infantry;break;
+			case("Mechanical"):this.slowType = ETargetType.Mechanical;break;
+			case("FlyingMechanical"):this.slowType = ETargetType.FlyingMechanical;break;
+			case("AnyMechanical"):this.slowType = ETargetType.AnyMechanical;break;
+		}
+
+	}
+	public void Start () {
 		if (CheckErrors() == true) { return; }
 		
+
+		
+		if(this.shot.ID==0) {
+			this.shot = FastPoolManager.GetPool(this.shotPrefab,true);
+		}  
+		GameObject g = this.shot.TryGetNextObject(Vector3.zero,Quaternion.identity);
+		useGravity = g.GetComponent<Rigidbody>().useGravity;
+		Destroy(g);
+
+		curAmmoCount = maxAmmoCount;
 		
 		// find muzzle flash particle systems
 		for (int f=0; f < exits.Length; f++) {
@@ -95,17 +130,6 @@ public class MF_BasicWeapon : MonoBehaviour {
 				exits[f].particleComponent = exits[f].flare.GetComponent<ParticleSystem>();
 				exits[f].particleComponent.Stop(true);
 			}
-		}
-		
-		curInaccuracy = inaccuracy; // initialize
-		
-		// compute missing value: shotSpeed, maxRange, shotDuration
-		if (shotSpeed <= 0) {
-			shotSpeed = maxRange / shotDuration;
-		} else if (maxRange <= 0) {
-			maxRange = shotSpeed * shotDuration;
-		} else { // compute shotDuration even if all 3 are set to keep math consistant
-			shotDuration = maxRange / shotSpeed;
 		}
 	}
 	
@@ -121,32 +145,30 @@ public class MF_BasicWeapon : MonoBehaviour {
 		if (error == true) { return; }
 		// reset burst and ammo, delay has already happened
 		if (curAmmoCount <= 0) {
+			curAmmoCount = maxAmmoCount;
 			curBurstCount = burstAmount;
 		//	curExit = 0;
-		}
+		} 
 		if (curBurstCount <= 0) { curBurstCount = burstAmount; }
 		
-		// fire weapon
+		// fire weapon 
 		// create shot
 		for (int spr=0; spr < shotsPerRound; spr++) {
-			GameObject myShot = null;
-			if(recoiler!=null)
-				recoiler.recoil();
-			myShot = shot.TryGetNextObject(exits[curExit].transform.position,exits[curExit].transform.rotation);
-			/*if(myShot==null) {
-				myShot = (GameObject) Instantiate(shot.Template, exits[curExit].transform.position, exits[curExit].transform.rotation);
-			}*/
+			GameObject myShot = shot.TryGetNextObject(exits[curExit].transform.position,exits[curExit].transform.rotation);
+			
 			Vector2 errorV2 = Random.insideUnitCircle * curInaccuracy;
 			myShot.transform.rotation *= Quaternion.Euler(errorV2.x, errorV2.y, 0);
 			myShot.GetComponent<Rigidbody>().velocity = platformVelocity + (myShot.transform.forward * shotSpeed);
+			if ( useGravity == true ) {
+				myShot.GetComponent<Rigidbody>().useGravity = true;
+			}
 			MF_BasicProjectile shotScript = myShot.GetComponent<MF_BasicProjectile>();
-			shotScript.startTime = Time.time;
 			shotScript.duration = shotDuration;
-			shotScript.damage = this.damage;
-			shotScript.splashRange = this.splashRange;
-			shotScript.splashDamage = this.splashDamage;
-
-		} 
+			shotScript.startTime = Time.time;
+			shotScript.slowTime = this.slowTime;
+			shotScript.slowPercent = this.slowPercent;
+			shotScript.slowType = this.slowType;
+		}
 		// flare
 		if (exits[curExit].flare) {
 			exits[curExit].particleComponent.Play();
@@ -155,7 +177,8 @@ public class MF_BasicWeapon : MonoBehaviour {
 		if (shotSound) {
 			shotSound.Play();
 		}
-		 
+		
+		if (unlimitedAmmo == false) { curAmmoCount--; } // only use ammo if not unlimited
 		curBurstCount--; 
 		curExit = MFmath.Mod(curExit+1, exits.Length); // next exit
 		
@@ -171,7 +194,7 @@ public class MF_BasicWeapon : MonoBehaviour {
 	
 	// use to determine if weapon is ready to fire. (not realoding, waiting for cycleTime, etc.) Seperate function to allow other scripts to check ready status.
 	public virtual bool ReadyCheck () {
-		if ( curAmmoCount <= 0 && dontReload == true) {
+		if ( curAmmoCount <= 0 && dontReload == true && unlimitedAmmo == false) {
 			// out of ammo
 		} else {
 			if ( Time.time >= delay ) {
@@ -183,21 +206,33 @@ public class MF_BasicWeapon : MonoBehaviour {
 	
 	// check if the weapons is aimed at the target location - does not account for shot intercept point. Use the AimCheck in the SmoothTurret script for intercept. This is here to use the weapon script without a turret.
 	public virtual bool AimCheck ( Transform target, float targetSize ) {
-		bool _ready = false;
-		if (target) {
-			float _targetRange = Vector3.Distance(exits[curExit].transform.position, target.position);
-			float _targetFovRadius = Mathf.Clamp(   (Mathf.Atan( (targetSize / 2) / _targetRange ) * Mathf.Rad2Deg) + aimTolerance,    0, 180 );
-			if ( Vector3.Angle(exits[curExit].transform.forward, target.position - exits[curExit].transform.position) <= _targetFovRadius ) {
-				_ready = true;
+		float _targetRange = Vector3.Distance(exits[curExit].transform.position, target.position);
+		float _targetFovRadius = Mathf.Clamp(   (Mathf.Atan( (targetSize / 2) / _targetRange ) * Mathf.Rad2Deg) + aimTolerance,    0, 180 );
+		if ( Vector3.Angle(exits[curExit].transform.forward, target.position - exits[curExit].transform.position) <= _targetFovRadius ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public virtual bool RangeCheck ( Transform target ) {
+		float _sqRange = (exits[curExit].transform.position - target.position).sqrMagnitude;
+		if ( useGravity == true ) {
+			float _ballRange = (shotSpeed*shotSpeed) / -Physics.gravity.y;
+			if ( _sqRange <= (_ballRange*_ballRange) ) {
+				return true;
+			}
+		} else {
+			if ( _sqRange <= (maxRange*maxRange) ) {
+				return true;
 			}
 		}
-		return _ready;
+		return false;
 	}
 	
 	public virtual bool CheckErrors () {
 		error = false;
 		string _object = gameObject.name;
-		if (shot == null) { Debug.Log(_object+": Weapon shot object hasn't been defined."); error = true; }
 		if (shotsPerRound <= 0) { Debug.Log(_object+": Weapon shotsPerRound must be > 0."); error = true; }
 		if (exits.Length <= 0) { Debug.Log(_object+": Weapon must have at least 1 exit defined."); error = true; }
 		for (int e=0; e < exits.Length; e++) {

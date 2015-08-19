@@ -9,6 +9,8 @@ public class WWTD_Tower : MonoBehaviour {
 	public TowerListRow rowData;
 	private MF_BasicScanner scanner;
 	private ST_Turret turret;
+
+	public bool demoMode = false;	
 	// Use this for initialization
 	void Start () {
 		Time.timeScale = 1f;
@@ -25,7 +27,9 @@ public class WWTD_Tower : MonoBehaviour {
 			
 		}
 		b.isTrigger = true;
-
+		if(demoMode) {
+			this.setWeapons();
+		}
 	}
 	public void OnClick() {
 		Debug.Log ("Tower Clicked: "+this.name);
@@ -107,7 +111,7 @@ public class WWTD_Tower : MonoBehaviour {
 		MF_ElectroWeapon[] electroWeapons = this.GetComponentsInChildren<MF_ElectroWeapon>();
 		for(int i = 0;i<electroWeapons.Length;i++) {
 			electroWeapons[i].initWeapon(rowData);
-		}
+		} 
 	}
 	public void hideRange() {
 		if(this.transform.FindChild("Range")!=null) {

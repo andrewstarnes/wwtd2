@@ -73,7 +73,7 @@ public class ST_ElectroTurret : MF_AbstractPlatform {
 					lastTargetPosition = target.transform.position;
 				}
 				// point at linear intercept position
-				targetLocation = MFcompute.Intercept(weaponMount.transform.position, platformVelocity, shotSpeed, target.transform.position, _targetVelocity);
+			//	targetLocation = MFcompute.Intercept(weaponMount.transform.position, platformVelocity, shotSpeed, target.transform.position, _targetVelocity);
 				
 			} else { // point at target position
 				targetLocation = target.transform.position;

@@ -2,22 +2,27 @@
 using System.Collections;
 
 // if using layers to designate factions, these names need to match the layer name
-using UnitScripts;
+public enum FactionType { Side0, Side1, Side2, Side3, Creeps, FlyingCreeps, GroundCreepBullseye,AirCreepBullseye };
 
-
-public enum FactionType { Side0, Side1, Side2, Side3, Creeps, FlyingCreeps, GroundCreepBullseye };
 
 public enum FactionMethodType { Tags, Layers }
 
-[System.Serializable]
 public class TargetData { 
 	
 	public Transform transform;
-	public BasicUnit script;
+	public MF_AbstractStatus script;
 	public float? lastDetected;
+	public float? lastAnalyzed;
 	public float? sqrMagnitude;
 	public float? range;
 	public float? auxValue1;
 	public float? auxValue2;
 
+	public Transform bullseye;
+	public static void RemoveAnalyzeData ( MF_TargetList script, int key ) {
+		script.targetList[key] = null;
+	}
 }
+
+
+

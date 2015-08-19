@@ -1,0 +1,38 @@
+GOOGLEFU_ID,ID,Name,Prefab,SpriteName,Description,Cost,UpgradesToA,UpgradesToB,Targets,Range,DetectorInterval,ShotSpeed,MaxRange,CycleTime,BurstAmount,BurstResetTime,ShotsPerRound,ReloadTime,BulletName,BulletDamage,BulletSplash,BulletSplashRange,BulletArmorModifier,BulletInfantryModifier,BulletSlowPercent,SlowTarget,BulletSlowTime,BaseTowerType,RotationRateMax,ElevationRateMax,RotationAccel,ElevationAccel,DecelerateMulti
+GOOGLEFU_TYPE,int,string,string,string,string,int,string,string,string,int,float,int,int,float,int,float,int,float,string,float,float,float,float,float,float,string,int,int,int,int,int,int,float
+TOWER_1,1,Basic Tower 1,Tow_Basic1,fasttower,Fast rate of fire with low damage.,10,Basic Tower 2,,Both,30,1,100,100,0.1,3,0.3,1,0.5,BulletPool,1,0,0,1,0.8,0,,0,0,300,400,500,300,2
+TOWER_2,2,Basic Tower 2,Tow_Basic2,fasttower,Fast rate of fire with low damage.,15,Basic Tower 3,,Both,34,0.9,100,100,0,0,1,1,0.4,BulletPool,2,0,0,1,0.8,0,,0,-1,300,400,500,300,2
+TOWER_3,3,Basic Tower 3,Tow_Basic3,fasttower,Fast rate of fire with low damage.,30,Basic Tower 4,,Both,38,0.8,100,100,0,0,1,1,0.3,BulletPool,3,0,0,1,0.8,0,,0,-1,300,400,500,300,2
+TOWER_4,4,Basic Tower 4,Tow_Basic4,fasttower,Fast rate of fire with low damage.,80,Basic Tower 5,,Both,42,0.7,100,100,0,0,1,1,0.2,BulletPool,4,0,0,1,0.8,0,,0,-1,300,400,500,300,2
+TOWER_5,5,Basic Tower 5,Tow_Basic5,fasttower,Fast rate of fire with low damage.,120,Basic Tower 6,,Both,46,0.6,100,100,0,0,1,1,0.1,BulletPool,5,0,0,1,0.8,0,,0,-1,300,400,500,300,2
+TOWER_6,6,Basic Tower 6,Tow_Basic6,fasttower,Fast rate of fire with low damage.,250,,,Both,50,0.5,100,100,0,0,1,1,0.05,BulletPool,6,0,0,1,0.8,0,,0,-1,300,400,500,300,2
+TOWER_7,7,Fire Tower 1,Tow_Fire1,firetower,"Flamethrower tower, small range, excellent vs Infantry",15,Fire Tower 2,,Ground,17,1,100,100,0,0,1,1,2,FlameThrower,0.05,0,0,0.1,1,0,,0,1,300,400,500,300,2
+TOWER_8,8,Fire Tower 2,Tow_Fire2,firetower,"Flamethrower tower, small range, excellent vs Infantry",10,Fire Tower 3,,Ground,18,1,100,100,0,0,1,1,2,FlameThrower,0.09,0,0,0.1,1,0,,0,-1,300,400,500,300,2
+TOWER_9,9,Fire Tower 3,Tow_Fire3,firetower,"Flamethrower tower, small range, excellent vs Infantry",30,Fire Tower 4,,Ground,19,1,100,100,0,0,1,1,2,FlameThrower,0.15,0,0,0.1,1,0,,0,-1,300,400,500,300,2
+TOWER_10,10,Fire Tower 4,Tow_Fire4,firetower,"Flamethrower tower, small range, excellent vs Infantry",50,Fire Tower 5,,Ground,20,1,100,100,0,0,1,1,2,FlameThrower,0.2,0,0,0.1,1,0,,0,-1,300,400,500,300,2
+TOWER_11,11,Fire Tower 5,Tow_Fire5,firetower,"Flamethrower tower, small range, excellent vs Infantry",90,Fire Tower 6,,Ground,21,1,100,100,0,0,1,1,2,FlameThrower,0.25,0,0,0.1,1,0,,0,-1,300,400,500,300,2
+TOWER_12,12,Fire Tower 6,Tow_Fire6,firetower,"Flamethrower tower, small range, excellent vs Infantry",140,,,Ground,22,1,100,100,0,0,1,1,2,FlameThrower,0.4,0,0,0.1,1,0,,0,-1,300,400,500,300,2
+TOWER_13,13,Laser Tower 1,Tow_Laser1,lasertower,Can destroy lines of units in one blast,40,Laser Tower 2,,Ground,30,1,150,3000,0,0,1,1,3,Laser,15,0,0,1,1,0,,0,2,300,400,500,300,2
+TOWER_14,14,Laser Tower 2,Tow_Laser2,lasertower,Can destroy lines of units in one blast,30,Laser Tower 3,,Ground,34,1,150,3000,0,0,1,1,3,Laser,20,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_15,15,Laser Tower 3,Tow_Laser3,lasertower,Can destroy lines of units in one blast,70,Laser Tower 4A,Laser Tower 4B,Ground,38,1,150,3000,0,0,1,1,3,Laser,25,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_16,16,Laser Tower 4A,Tow_Laser4a,lasertower,Can destroy lines of units in one blast,110,Laser Tower 5A,,Ground,42,1,150,3000,0,0,1,1,3,Laser,40,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_17,17,Laser Tower 5A,Tow_Laser5a,lasertower,Can destroy lines of units in one blast,150,Laser Tower 6A,,Ground,46,1,150,3000,0,0,1,1,3,Laser,60,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_18,18,Laser Tower 6A,Tow_Laser6a,lasertower,Can destroy lines of units in one blast,300,,,Ground,50,1,150,3000,0,0,1,1,3,Laser,90,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_19,19,Laser Tower 4B,Tow_Laser4a,lasertower,Can destroy lines of units in one blast,70,Laser Tower 5B,,Ground,54,1,150,3000,0,0,1,1,3,Laser,40,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_20,20,Laser Tower 5B,Tow_Laser5a,lasertower,Can destroy lines of units in one blast,110,Laser Tower 6B,,Ground,58,1,150,3000,0,0,1,1,3,Laser,60,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_21,21,Laser Tower 6B,Tow_Laser6a,lasertower,Can destroy lines of units in one blast,150,,,Ground,62,1,150,3000,0,0,1,1,3,Laser,90,0,0,1,1,0,,0,-1,300,400,500,300,2
+TOWER_22,22,Mortar Tower 1,Tow_Mortar1,mortar,Strong powerful weapon that has good splash damage.,30,Mortar Tower 2,,Ground,66,1,40,100,0,0,1,1,10,Cannon,10,0.5,10,1,1,0,,0,3,300,400,500,300,2
+TOWER_23,23,Mortar Tower 2,Tow_Mortar2,mortar,Strong powerful weapon that has good splash damage.,20,Mortar Tower 3,,Ground,70,1,40,100,0,0,1,1,10,Cannon,20,0.6,15,1,1,0,,0,-1,300,400,500,300,2
+TOWER_24,24,Mortar Tower 3,Tow_Mortar3,mortar,Strong powerful weapon that has good splash damage.,50,Mortar Tower 4A,Mortar Tower 4B,Ground,74,1,40,100,0,0,1,1,10,Cannon,40,0.7,20,1,1,0,,0,-1,300,400,500,300,2
+TOWER_25,25,Mortar Tower 4A,Tow_Mortar4a,mortar,Strong powerful weapon that has good splash damage.,90,Mortar Tower 5B,,Ground,78,1,40,100,0,0,1,1,10,Cannon,80,0.8,25,1,1,0,,0,-1,300,400,500,300,2
+TOWER_26,26,Mortar Tower 5A,Tow_Mortar5a,mortar,Strong powerful weapon that has good splash damage.,150,Mortar Tower 6B,,Ground,82,1,40,100,0,0,1,1,10,Cannon,120,0.9,30,1,1,0,,0,-1,300,400,500,300,2
+TOWER_27,27,Mortar Tower 6A,Tow_Mortar6a,mortar,Strong powerful weapon that has good splash damage.,300,,,Ground,86,1,40,100,0,0,1,1,10,Cannon,160,1,35,1,1,0,,0,-1,300,400,500,300,2
+TOWER_28,28,Mortar Tower 4B,Tow_Mortar4b,mortar,Strong powerful weapon that has good splash damage.,390,Mortar Tower 5B,,Ground,90,1,40,100,0,0,1,1,10,Cannon,200,0.7,25,1,1,0,,0,-1,300,400,500,300,2
+TOWER_29,29,Mortar Tower 5B,Tow_Mortar5b,mortar,Strong powerful weapon that has good splash damage.,495,Mortar Tower 6B,,Ground,94,1,40,100,0,0,1,1,10,Cannon,240,0.8,30,1,1,0,,0,-1,300,400,500,300,2
+TOWER_30,30,Mortar Tower 6B,Tow_Mortar6b,mortar,Strong powerful weapon that has good splash damage.,600,,,Ground,98,1,40,100,0,0,1,1,10,Cannon,280,0.9,35,1,1,0,,0,-1,300,400,500,300,2
+TOWER_31,31,Electric Tower 1,Tow_Electric1,radar,"Slows Mechanical Units, Destroys Infantry",100,Electric Tower 2,,Ground,20,1,40,100,0,0,1,1,10,Electric,7,0,0,0,1,0.5,AnyMechanical,100,4,300,400,500,300,2
+TOWER_32,32,Electric Tower 2,Tow_Electric2,radar,"Slows Mechanical Units, Destroys Infantry",150,Electric Tower 3,,Ground,21,1,40,100,0,0,1,1,10,Electric,12,0,0,0,1,0.4,AnyMechanical,135,-1,300,400,500,300,2
+TOWER_33,33,Electric Tower 3,Tow_Electric3,radar,"Slows Mechanical Units, Destroys Infantry",300,Electric Tower 4,,Ground,22,1,40,100,0,0,1,1,10,Electric,18,0,0,0,1,0.3,AnyMechanical,200,-1,300,400,500,300,2
+TOWER_34,34,Electric Tower 4,Tow_Electric4,radar,"Slows Mechanical Units, Destroys Infantry",500,Electric Tower 5,,Ground,23,1,40,100,0,0,1,1,10,Electric,25,0,0,0,1,0.2,AnyMechanical,250,-1,300,400,500,300,2
+TOWER_35,35,Electric Tower 5,Tow_Electric5,radar,"Slows Mechanical Units, Destroys Infantry",800,Electric Tower 6,,Ground,24,1,40,100,0,0,1,1,10,Electric,40,0,0,0,1,0.1,AnyMechanical,300,-1,300,400,500,300,2
+TOWER_36,36,Electric Tower 6,Tow_Electric6,radar,"Slows Mechanical Units, Destroys Infantry",1000,,,Ground,25,1,40,100,0,0,1,1,10,Electric,80,0,0,0,1,0.01,AnyMechanical,350,-1,300,400,500,300,2

@@ -4,6 +4,7 @@ using TowerScripts;
 using DigitalRuby.ThunderAndLightning;
 using UnitScripts;
 using Google2u;
+using Creep;
 
 public class MF_ElectroWeapon : MonoBehaviour {
 
@@ -34,7 +35,9 @@ public class MF_ElectroWeapon : MonoBehaviour {
 	public float splashDamage = 0f;
 	public float splashRange = 0f;
 	public float slowPercent = 0f;
-	public float slowTime = 0f;
+	public int slowTime = 0;
+
+	public ETargetType slowType = ETargetType.AnyMechanical;
 	public float damageInfantryMultiplier = 0f;
 	public float damageMechanicMultiplier = 0f;
 	public float maxRange = 100f;
@@ -64,7 +67,18 @@ public class MF_ElectroWeapon : MonoBehaviour {
 		this.damage = aRow._BulletDamage;
 		this.splashDamage = aRow._BulletSplash;
 		this.splashRange = aRow._BulletSplashRange;
-
+		this.damageInfantryMultiplier = aRow._BulletInfantryModifier;
+		this.damageMechanicMultiplier = aRow._BulletArmorModifier;
+		this.slowTime = aRow._BulletSlowTime;
+		this.slowPercent = aRow._BulletSlowPercent;
+	
+		switch(aRow._SlowTarget) {
+			default:this.slowType = ETargetType.None;break;
+			case("Infantry"):this.slowType = ETargetType.Infantry;break;
+			case("Mechanical"):this.slowType = ETargetType.Mechanical;break;
+			case("FlyingMechanical"):this.slowType = ETargetType.FlyingMechanical;break;
+			case("AnyMechanical"):this.slowType = ETargetType.AnyMechanical;break;
+		} 
 	}
 	public void Start () {
 		if (CheckErrors() == true) { return; }
@@ -92,7 +106,7 @@ public class MF_ElectroWeapon : MonoBehaviour {
 		yield return new WaitForSeconds(0.2f);
 		if(aTarget!=null) {
 			BasicUnit u = aTarget.GetComponent<BasicUnit>();
-			u.hitUnit(this.damage,this.damageInfantryMultiplier,this.damageMechanicMultiplier);
+			u.hitUnit(this.damage,this.damageInfantryMultiplier,this.damageMechanicMultiplier,this.slowPercent,this.slowTime,this.slowType);
 		}	
 	}
 	// use this only if already checked if weapon is ready to fire

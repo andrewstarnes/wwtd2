@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnitScripts;
 
 namespace FlightPathManager {
 	public class FlightPathFollower : MonoBehaviour {
@@ -42,6 +43,7 @@ namespace FlightPathManager {
 		public void OnCollisionEnter(Collision aOther) {
 			if(aOther.gameObject.name=="Terrain") {
 				Destroy(this.gameObject);
+				this.GetComponent<BasicUnit>().finalDestroy();
 			}
 		}
 		public void dieTarget() {
@@ -59,6 +61,7 @@ namespace FlightPathManager {
 				if(currentNode==null||currentNode.transform.position.magnitude==0f||distanceToCurrent<distThreshold) {
 					if(currentNode!=null&&currentNode.hasEscapedHere) {
 						Destroy(this.gameObject);
+						GameManager.REF.creepEscape();
 					} else
 						GetNextNode();
 				}

@@ -1,20 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[RequireComponent (typeof (MF_BasicScanner))]
-[RequireComponent (typeof (MF_TargetList))]
-[RequireComponent (typeof (ST_TurretControl))]
-[RequireComponent (typeof (MF_BasicTargeting))] 
 public class ST_Turret : MF_AbstractPlatform {
+	[Header("Aiming Options:")]
 	[Tooltip("Turret will aim ahead to hit a moving target.")]
 	public bool useIntercept = true;
-	[Header("Turning properties: (1-1000)")]
+	[Tooltip("Will aim shots as if they are affected by gravity.")]
+	public bool useGravity;
+	[Tooltip("When using gravity, will use the solution with the highest arc.")]
+	public bool useHighArc;
+	[Header("Turning Properties: (1-1000)")]
 	[Tooltip("(deg/sec)\nBest within 1-1000 as jitter begins to occur at high rotation/elevation rates. " +
-				"Conider using Constant Turn Rate with high motion rates, as this will eliminate any jitter.")]
+			 "Conider using Constant Turn Rate with high motion rates, as this will eliminate any jitter.\n" +
+	         "Also used to adjust pitch for rotation sounds.")]
 	[Range(1, 1000)]
 	public float rotationRateMax = 50f;
 	[Tooltip("(deg/sec)\nBest within 1-1000 as jitter begins to occur at high rotation/elevation rates. " +
-	         "Conider using Constant Turn Rate with high motion rates, as this will eliminate jitter.")]
+	         "Conider using Constant Turn Rate with high motion rates, as this will eliminate jitter.\n" +
+	         "Also used to adjust pitch for elevation sounds.")]
 	[Range(1, 1000)]
 	public float elevationRateMax = 50f;
 	[Tooltip("(deg/sec)\nBest within 1-1000 as jitter begins to occur at high rotation/elevation rates. " +
@@ -27,15 +30,18 @@ public class ST_Turret : MF_AbstractPlatform {
 	public float elevationAccel = 50f;
 	[Tooltip("Multiplier. Causes decelleration to be different than accelleration.")]
 	public float decelerateMult = 1f;
-	[Header("Turn arc limits: (-180 to 180)")]
+	[Tooltip("Best for fast precision turning, or to eliminate any jitter resulting from high-speed rotation/elevation.\n" +
+	         "Rotation Accel and Elevation Accel used as rates.")]
+	public bool constantTurnRate;
+	[Header("Turn Arc Limits: (-180 to 180)")]
 	[Range(-180, 0)] public float limitLeft = -180f;
 	[Range(0, 180)] public float limitRight = 180f;
-	[Header("Elevation arc limits: (-90 to 90)")]
+	[Header("Elevation Arc Limits: (-90 to 90)")]
 	[Range(0, 90)] public float limitUp = 90f;
 	[Range(-90, 0)] public float limitDown = -10f;
-	[Header("Rest angle: (x = elevation, y = rotation)")]
+	[Header("Rest Angle: (x = elevation, y = rotation)")]
 	public Vector2 restAngle;
-	[Header("Aiming error:")]
+	[Header("Aiming Error:")]
 	[Tooltip("(deg radius)\nWill cause the turret to point in a random offset from target. Recomend value less than 1.")]
 	public float aimError; // 0 = no error, will skip aimError routine if turningAimInaccuracy is also 0
 	[Tooltip("How often to generate a new error offset.\n0 = every frame, but only if Aim Error or Turning Aim Inaccuracy are greater than 0.")]
@@ -48,15 +54,13 @@ public class ST_Turret : MF_AbstractPlatform {
 	[Header("Weapon inaccuracy due to turn/elevate:")]
 	[Tooltip("(additive deg radius, per deg of motion/sec)\nWill not affect turret aim; error is sent to weapons. Recommend small values.")]
 	public float turningWeapInaccuracy; // additive per degree per second
-	[Header("No rotation/elevation speed variation:")]
-	[Tooltip("Best for fast precision turning, or to eliminate any jitter resulting from high-speed rotation/elevation.")]
-	public bool constantTurnRate;
 	[Header("Parts:")]
 	public GameObject rotator = null;
 	public GameObject elevator = null;
 	public AudioSource rotatorSound = null;
 	public AudioSource elevatorSound = null;
-	[Tooltip("Sound will play slower or faster with motion variation. Normal play speed is at 1/2 of Max Rotation/Elevation.")]
+	[Tooltip("Sound will play slower or faster with motion variation. Normal play speed is at 1/2 of Max Rotation/Elevation.\n" +
+	         "0 = no pitch variation."	)]
 	public float soundPitchRange = .5f;
 	[Header("Object holding turret:")]
 	[Tooltip("Will impart any velocity to fired shots. Rigidbody is not necessary. If turret platform/vehicle/parent is stationary, may leave empty:")]
@@ -84,6 +88,8 @@ public class ST_Turret : MF_AbstractPlatform {
 	float lastRotRateEst;
 	float lastEleRateEst;
 	float lastAimError;
+	Vector3? _interceptAim;
+	Vector3 targetLoc;
 	bool error;
 	
 	void Start () {
@@ -128,10 +134,17 @@ public class ST_Turret : MF_AbstractPlatform {
 				lastAimError = Time.time;
 			}
 		}
-		
-		// intercept
+
+		// used in various calculations
 		if (target) {
-			if ( useIntercept == true && shotSpeed > 0 ) { // point at shot and target intercept location
+			targetRange = Vector3.Distance( exitLoc, target.transform.position );
+		}
+		
+		// intercept and ballistics
+		if (target) {
+			Vector3 _targetVelocity = Vector3.zero;
+			targetLoc = target.transform.position;
+			if ( useIntercept == true ) { // gather velocity information
 				if (platform) { // check if turret/platform has been provided
 					if (platform.GetComponent<Rigidbody>()) { // if has a rigidbody, use velocity
 						platformVelocity = platform.GetComponent<Rigidbody>().velocity;
@@ -142,22 +155,48 @@ public class ST_Turret : MF_AbstractPlatform {
 				} else { // otherwise assume turret is stationary
 					platformVelocity = Vector3.zero;
 				}
-
-				Vector3 _targetVelocity;
 				if (target.GetComponent<Rigidbody>()) { // if target has a rigidbody, use velocity
 					_targetVelocity = target.GetComponent<Rigidbody>().velocity;
 				} else { // otherwise compute velocity from change in position
-					_targetVelocity = (target.transform.position - lastTargetPosition) / Time.deltaTime;
-					lastTargetPosition = target.transform.position;
+					_targetVelocity = (targetLoc - lastTargetPosition) / Time.deltaTime;
+					lastTargetPosition = targetLoc;
 				}
+			}
 
-				Debug.Log ("Target Location: "+targetLocation.ToString());
-				// point at linear intercept position
-				targetLocation = MFcompute.Intercept(weaponMount.transform.position, platformVelocity, shotSpeed, target.transform.position, _targetVelocity);
-				
-				Debug.DrawLine(weaponMount.transform.position,targetLocation);
-			} else { // point at target position
-				targetLocation = target.transform.position;
+			if ( useGravity == true && Physics.gravity.y != 0 ) {
+				int _factor = -Physics.gravity.y > 0 ? 1 : -1;
+				// find initial aim angle
+				float? _ballAim = MFcompute.BallisticAimAngle( targetLoc, exitLoc, shotSpeed, useHighArc );
+				if ( _ballAim == null ) {
+					target = null;
+				} else {
+					if ( useIntercept == true ) {
+						_ballAim = BallisticIteration ( exitLoc, shotSpeed, (float)_ballAim, _targetVelocity );
+						if ( useHighArc == true ) { // iterate for better high arc accuracy
+							int bi = 0;
+							int biMax = 4;
+							while ( target && bi++ < biMax ) {
+								_ballAim = BallisticIteration ( exitLoc, shotSpeed, (float)_ballAim, _targetVelocity );
+							}
+						}
+					}
+					if (target) {
+						targetLocation = ((Quaternion.AngleAxis( _factor * (float)_ballAim * Mathf.Rad2Deg, Vector3.Cross((targetLoc - exitLoc), Vector3.up) ) * 
+						                   (new Vector3(targetLoc.x, exitLoc.y, targetLoc.z) - exitLoc) ).normalized * targetRange ) + exitLoc;
+					}
+				}
+			} else {
+				if ( useIntercept == true ) {
+					// point at linear intercept position
+					_interceptAim = MFcompute.Intercept(exitLoc, platformVelocity, shotSpeed, targetLoc, _targetVelocity);
+					if ( _interceptAim == null ) {
+						target = null;
+					} else {
+						targetLocation = (Vector3)_interceptAim;
+					}
+				} else { // point at target position
+					targetLocation = target.transform.position;
+				}
 			}
 		}
 		
@@ -167,12 +206,12 @@ public class ST_Turret : MF_AbstractPlatform {
 		float _xzDist;
 		Vector3 _elevatorPlaneTarget;
 		if (target) {
-			targetRange = Vector3.Distance( weaponMount.transform.position, target.transform.position );
 			
+			Debug.DrawLine(this.exitLoc,targetLocation);
 			// move apparent location of target due to turret aim error
 			if ( aimError + totalTurnAimInaccuracy > 0 ) {
 				Quaternion errorRotation = Quaternion.Euler( systAimError * (aimError + totalTurnAimInaccuracy) );
-				targetLocation = weaponMount.transform.position + (errorRotation * (targetLocation - weaponMount.transform.position)).normalized * targetRange;
+				targetLocation = exitLoc + (errorRotation * (targetLocation - exitLoc)).normalized * targetRange; // **** keep this normalized ??
 			}
 			
 			// find target's location in rotation plane
@@ -180,7 +219,7 @@ public class ST_Turret : MF_AbstractPlatform {
 			_rotatorPlaneTarget = rotator.transform.TransformPoint( new Vector3(_localTarget.x, 0f, _localTarget.z) );
 			// find target's location in elevation plane as if rotator is already facing target, as rotation will eventualy bring it to front. (don't elevate past 90/-90 degrees to reach target)
 			_xzDist = Vector3.Distance( rotator.transform.position, _rotatorPlaneTarget );
-			_elevatorPlaneTarget = rotator.transform.TransformPoint( new Vector3(0f, _localTarget.y+1.0f, _xzDist / transform.localScale.z) ); 
+			_elevatorPlaneTarget = rotator.transform.TransformPoint( new Vector3(0f, _localTarget.y, _xzDist / transform.localScale.z) ); 
 			
 		} else { // no target
 			// set rotation and elevation goals to the rest position
@@ -204,10 +243,11 @@ public class ST_Turret : MF_AbstractPlatform {
 				_modSeperation *= -1f; // for smooth turn rate mode
 			}
 		}
-		
+
+		Quaternion _rot;
 		if (constantTurnRate == true) { // no variation in rotation speed. more accurate, lightweight, less realistic.
 			// apply rotation
-			Quaternion _rot = Quaternion.LookRotation( _rotatorPlaneTarget - rotator.transform.position, rotator.transform.up );
+			_rot = Quaternion.LookRotation( _rotatorPlaneTarget - rotator.transform.position, rotator.transform.up );
 			rotator.transform.rotation = Quaternion.RotateTowards( rotator.transform.rotation, _rot, Mathf.Min(_modAccel, rotationRateMax) * Time.deltaTime );
 			
 			// apply elevation
@@ -239,25 +279,21 @@ public class ST_Turret : MF_AbstractPlatform {
 		
 		// turn sounds	
 		if (rotatorSound) {
-			if ( averageRotRateEst > rotationAccel * .03f ) {
-				if ( rotatorSound.isPlaying == false ) {
-					rotatorSound.PlayDelayed(.1f);
-				}
-				rotatorSound.pitch = 1f + (( (averageRotRateEst - (rotationRateMax * .5f)) / rotationRateMax ) * (soundPitchRange * 2f)); 
-			} else {
-				rotatorSound.Stop();
-			}
+			TurnSound( rotatorSound, soundPitchRange, averageRotRateEst, rotationRateMax, rotationAccel );
 		}
-		
 		if (elevatorSound) {
-			if ( averageEleRateEst > elevationAccel * .03f ) {
-				if ( elevatorSound.isPlaying == false ) {
-					elevatorSound.PlayDelayed(.1f);
-				}
-				elevatorSound.pitch = 1f + (( (averageEleRateEst - (elevationRateMax * .5f)) / elevationRateMax ) * (soundPitchRange * 2f)); 
-			} else {
-				elevatorSound.Stop();
+			TurnSound( elevatorSound, soundPitchRange, averageEleRateEst, elevationRateMax, elevationAccel );
+		}
+	}
+
+	void TurnSound ( AudioSource sound, float pitchRange, float avgRateEst, float rateMax, float accel ) {
+		if ( avgRateEst > accel * .03f ) {
+			if ( sound.isPlaying == false ) {
+				sound.PlayDelayed(.1f);
 			}
+			sound.pitch = 1f + (( (avgRateEst - (rateMax * .5f)) / rateMax ) * (pitchRange * 2f)); 
+		} else {
+			sound.Stop();
 		}
 	}
 	
@@ -302,12 +338,8 @@ public class ST_Turret : MF_AbstractPlatform {
 			_angle = MFmath.AngleSigned(rotator.transform.forward, _elevatorPlaneTarget - elevator.transform.position, -elevator.transform.right);
 			if (_angle < limitDown || _angle > limitUp) {
 				return false;
-			}
-			if(_xzDist<this.GetComponent<MF_BasicScanner>().detectorRange) {
-				
-				return true;
-			}
-			return false; 
+			}   
+			return true;
 		} else {
 			return false;
 		}
@@ -323,11 +355,37 @@ public class ST_Turret : MF_AbstractPlatform {
 				targetRange = Vector3.Distance( weaponMount.transform.position, target.transform.position );
 			}
 			float _targetFovRadius = Mathf.Clamp(   (Mathf.Atan( (targetSize / 2f) / targetRange ) * Mathf.Rad2Deg) + aimTolerance,    0, 180 );
+		/*	if(this.useGravity) {
+				if(aimTolerance == 0f) {
+					aimTolerance = 10f;
+				}
+				aimTolerance *=2
+			}*/
 			if ( Vector3.Angle(weaponMount.transform.forward, targetLocation - weaponMount.transform.position) <= _targetFovRadius ) {
 				_ready = true;
 			}
 		}
 		return _ready;
+	}
+
+	float? BallisticIteration ( Vector3 exitLoc, float shotSpeed, float aimRad, Vector3 targetVelocity ) {
+		float? _ballAim = null;
+		// find new flight time
+		float? _flightTime = MFcompute.BallisticFlightTime( targetLoc, exitLoc, shotSpeed, aimRad, useHighArc );
+		float _effectiveShotSpeed = Vector3.Distance(transform.position, targetLoc) / (float)_flightTime;
+		// find intercept based on new _effectiveShotSpeed
+		Vector3? _intAim = MFcompute.Intercept(exitLoc, platformVelocity, _effectiveShotSpeed, target.transform.position, targetVelocity);
+		if ( _intAim == null ) {
+			target = null;
+		} else {
+			targetLoc = (Vector3)_intAim;
+			// re-calculate ballistic trajectory based on intercept point
+			_ballAim = MFcompute.BallisticAimAngle( targetLoc, exitLoc, shotSpeed, useHighArc );
+			if ( _ballAim == null ) {
+				target = null;
+			}
+		}
+		return _ballAim;
 	}
 	
 	bool CheckErrors () {

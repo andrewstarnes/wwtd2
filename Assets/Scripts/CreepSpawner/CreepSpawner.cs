@@ -8,14 +8,20 @@ namespace CreepSpawnerPackage {
 		public Wave[] waves;
 		public Wave currentWave;
 		public static GameObject hudRoot;
+		public static CreepSpawner REF;
 		public int nextWave = 0;
 		// Use this for initialization
 		void Start () {
 			nextWave = 0;
 			GameObject g = GameObject.Find("UI Root");
 			hudRoot = g;
+			REF = this;
 		}
-		
+		public string wavesText {
+			get {
+				return nextWave + " / " +waves.Length;
+			}
+		}
 		// Update is called once per frame
 		void Update () {
 			if(currentWave==null||currentWave.complete) {

@@ -17,9 +17,11 @@ public class MF_BasicScanner : MonoBehaviour {
 	public float detectorRange;
 	[Tooltip("(seconds)\nHow often to refresh the target list. 0 = every frame.")]
 	public float detectorInterval;
+	public bool requireLos;
+	public float losMinRange;
 	
 	[HideInInspector] float lastDetect;
-	public int currentTargetCount = 0;
+	
 	MF_TargetList targetListScript;
 	LayerMask mask;
 	bool error;
@@ -46,7 +48,6 @@ public class MF_BasicScanner : MonoBehaviour {
 			lastDetect = Time.time;
 			DoScanner();
 			targetListScript.lastUpdate = Time.time; // for target choosing timing
-			currentTargetCount = targetListScript.targetList.Count;
 		}	
 	}
 	
@@ -73,7 +74,7 @@ public class MF_BasicScanner : MonoBehaviour {
 				// **** avoids a bug where unity leaves an invisible empty object after editing a prefab when playing a scene without clicking off the edited prefab.
 				if ( _targets[t].transform.root.GetComponent<BasicUnit>() == null ) {
 					_targets[t] = null;
-					continue;
+					continue; 
 				}
 			}
 		}
@@ -90,21 +91,35 @@ public class MF_BasicScanner : MonoBehaviour {
 		for (int d=0; d < _targets.Length; d++) {
 			if ( _targets[d] == gameObject ) { continue; } // skip self
 			if ( _targets[d] == null ) { continue; } // skip null 
-			
-			BasicUnit _statusScript = _targets[d].transform.root.GetComponent<BasicUnit>();
-	
-			// add to targetList
+			GameObject bullseye = _targets[d];
+			_targets[d] = _targets[d].transform.root.gameObject; // make sure accessing root level
 			int key = _targets[d].GetInstanceID();
+
+			if ( requireLos == true && (transform.position - _targets[d].transform.position).sqrMagnitude > losMinRange * losMinRange ) {
+				RaycastHit _hit;
+				Vector3 _targDir = transform.position - _targets[d].transform.position;
+				Physics.Raycast( transform.position - (_targDir.normalized * losMinRange), -_targDir, out _hit, detectorRange );
+				if ( _hit.transform.root != _targets[d].transform ) {
+					if ( targetListScript.targetList.ContainsKey(key) == true ) {
+						targetListScript.targetList[key] = null;
+					}
+					continue;
+				}
+			}
+
+			// add to targetList
 			if ( targetListScript.targetList.ContainsKey(key) == false) { // don't try to overwrite exsisting key
 				// new record
 				targetListScript.targetList.Add( key, new TargetData() );
 				targetListScript.targetList[key].transform = _targets[d].transform;
-				targetListScript.targetList[key].script = _statusScript;
+				targetListScript.targetList[key].script = _targets[d].GetComponent<MF_AbstractStatus>();
+				targetListScript.targetList[key].bullseye = bullseye.transform;
 			}
 			// update record
 			targetListScript.targetList[key].lastDetected = Time.time;
+			targetListScript.targetList[key].lastAnalyzed = Time.time;
 			targetListScript.targetList[key].sqrMagnitude = (transform.position - _targets[d].transform.position).sqrMagnitude;
-			
+
 			// other data gathered by detector
 
 		}

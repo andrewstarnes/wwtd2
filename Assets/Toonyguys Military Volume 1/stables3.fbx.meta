@@ -1,0 +1,131 @@
+fileFormatVersion: 2
+guid: 1804be971336d4f7ab311fff802e74c4
+timeCreated: 1439902897
+licenseType: Pro
+ModelImporter:
+  serializedVersion: 18
+  fileIDToRecycleName:
+    100000: Camera
+    100002: Horse.000
+    100004: Horse.001
+    100006: Horse.002
+    100008: Horse.003
+    100010: Horse.004
+    100012: Horse.005
+    100014: Horse.006
+    100016: Horse.007
+    100018: Horse.008
+    100020: Lamp
+    100022: Lamp.001
+    100024: Lamp.002
+    100026: Lamp.003
+    100028: //RootNode
+    100030: Walls
+    400000: Camera
+    400002: Horse.000
+    400004: Horse.001
+    400006: Horse.002
+    400008: Horse.003
+    400010: Horse.004
+    400012: Horse.005
+    400014: Horse.006
+    400016: Horse.007
+    400018: Horse.008
+    400020: Lamp
+    400022: Lamp.001
+    400024: Lamp.002
+    400026: Lamp.003
+    400028: //RootNode
+    400030: Walls
+    2300000: Horse.000
+    2300002: Horse.001
+    2300004: Horse.002
+    2300006: Horse.003
+    2300008: Horse.004
+    2300010: Horse.005
+    2300012: Horse.006
+    2300014: Horse.007
+    2300016: Horse.008
+    2300018: Walls
+    3300000: Horse.000
+    3300002: Horse.001
+    3300004: Horse.002
+    3300006: Horse.003
+    3300008: Horse.004
+    3300010: Horse.005
+    3300012: Horse.006
+    3300014: Horse.007
+    3300016: Horse.008
+    3300018: Walls
+    4300000: Horse.008
+    4300002: Horse.007
+    4300004: Horse.006
+    4300006: Horse.005
+    4300008: Horse.004
+    4300010: Walls
+    4300012: Horse.002
+    4300014: Horse.001
+    4300016: Horse.000
+    4300018: Horse.003
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    optimizeGameObjects: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: .5
+    animationPositionError: .5
+    animationScaleError: .5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    splitTangentsAcrossUV: 1
+    normalImportMode: 0
+    tangentImportMode: 1
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    human: []
+    skeleton: []
+    armTwist: .5
+    foreArmTwist: .5
+    upperLegTwist: .5
+    legTwist: .5
+    armStretch: .0500000007
+    legStretch: .0500000007
+    feetSpacing: 0
+    rootMotionBoneName: 
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

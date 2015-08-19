@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using CreepSpawnerPackage;
 
 public class TopRightBoxManager : MonoBehaviour {
 
@@ -39,5 +40,7 @@ public class TopRightBoxManager : MonoBehaviour {
 			currentCashDisplay -= cashAdder;
 			this.cashLabel.text = currentCashDisplay.ToString("C0");
 		}
-	}
+		this.livesLabel.text = ""+GameManager.REF.livesRemaining;
+		this.wavesLabel.text = CreepSpawner.REF.wavesText;
+	} 
 }

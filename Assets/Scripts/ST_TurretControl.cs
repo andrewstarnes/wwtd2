@@ -44,7 +44,7 @@ public class ST_TurretControl : MonoBehaviour {
 	MF_AbstractTargeting targetingScript;
 	ST_Turret turretScript;
 	ST_Player playerScript;
-	float targetSize = 10f;
+	float targetSize;
 	float lastLosCheck;
 	float lastFire;
 	float oldTurnWeapInaccuracy;
@@ -57,7 +57,7 @@ public class ST_TurretControl : MonoBehaviour {
 		public GameObject weapon;
 		[HideInInspector] public MF_BasicWeapon script;
 	}
-
+	
 	void Start () {
 		if (CheckErrors() == true) { return; }
 		
@@ -127,7 +127,7 @@ public class ST_TurretControl : MonoBehaviour {
 		default :
 			break;
 		}
-
+		checkTargetSize = true;
 		// if this is a new target, cache info
 		if (target != storedTarget) {
 			storedTarget = target;
@@ -135,12 +135,12 @@ public class ST_TurretControl : MonoBehaviour {
 				if (checkTargetSize == true) {
 					Bounds _bounds; 
 					targetSize = 0f;
-					if (target.GetComponent<Collider>()) { // does root have a collider?
-						_bounds = target.GetComponent<Collider>().bounds;
+					if (target.transform.root.GetComponent<Collider>()) { // does root have a collider?
+						_bounds = target.transform.root.GetComponent<Collider>().bounds;
 						targetSize = Mathf.Max( _bounds.size.x * target.transform.localScale.x, _bounds.size.y * target.transform.localScale.y, _bounds.size.z * transform.localScale.z );
 					} else { // no colldier found on target root
 						// check root object's children for the first collider found
-						for (int c=0; c < target.transform.childCount; c++) {
+						for (int c=0; c < target.transform.root.transform.childCount; c++) {
 							if (target.transform.GetChild(c).GetComponent<Collider>()) { // found a collider
 								_bounds = target.transform.GetChild(c).GetComponent<Collider>().bounds;
 								targetSize = Mathf.Max( _bounds.size.x * target.transform.localScale.x, _bounds.size.y * target.transform.localScale.y, _bounds.size.z * transform.localScale.z );
@@ -162,12 +162,15 @@ public class ST_TurretControl : MonoBehaviour {
 		if (target) {
 			if ( controller == ControlType.AI_AutoTarget || controller == ControlType.AI_NoTarget ) { // AI will shoot
 				if ( weapons.Length > 0 ) {
-					// set shot speed for turret aim intercept
+					// set shot speed for turret aim intercept / ballistics
 					turretScript.shotSpeed = weapons[curWeapon].script.shotSpeed;
-					if ( turretScript.AimCheck( targetSize, weapons[curWeapon].script.aimTolerance ) == true ) { // check if turret is aimed at target
+					turretScript.exitLoc = weapons[curWeapon].script.exits[ weapons[curWeapon].script.curExit ].transform.position;
+					if (turretScript.AimCheck( targetSize, weapons[curWeapon].script.aimTolerance ) == true ) { // check if turret is aimed at target
 						if ( weapons[curWeapon].script.ReadyCheck() == true ) { // early out if weapon isn't ready
 							Shoot();
 						}
+					} else {
+						Debug.Log ("Aim check failed, waiting!");
 					}
 				}
 			}
@@ -217,10 +220,8 @@ public class ST_TurretControl : MonoBehaviour {
 			if (Time.time >= lastLosCheck + losCheckInterval) {
 				RaycastHit _hit;
 				_losClear = false;
-				Vector3 targetPos = target.transform.position;
-				targetPos.y += 0f; 
 				Vector3 _startPos = weapons[curWeapon].script.exits[ weapons[curWeapon].script.curExit ].transform.position;
-				if (Physics.Raycast(_startPos, targetPos - _startPos, out _hit, weapons[curWeapon].script.maxRange)) {
+				if (Physics.Raycast(_startPos, target.transform.position - _startPos, out _hit, weapons[curWeapon].script.maxRange)) {
 					if ( _hit.transform.root.gameObject == target ) {
 						_losClear = true;
 					}
@@ -231,8 +232,7 @@ public class ST_TurretControl : MonoBehaviour {
 		
 		// fire weapons
 		if (_losClear == true) {
-			float _targetRange = Vector3.Distance(turretScript.weaponMount.transform.position, turretScript.targetLocation);
-			if (_targetRange <= weapons[curWeapon].script.maxRange) {
+			if ( weapons[curWeapon].script.RangeCheck(target.transform) == true ) {
 				weapons[curWeapon].script.platformVelocity = turretScript.platformVelocity;
 				if (alternatingFire == true) { // alternate fire bewteen weapons
 					// based on weapons[0] cycle rate. for best results, all weapons should have the same cycle time

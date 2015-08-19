@@ -16,7 +16,11 @@ public class InterfaceManagerUtils : MonoBehaviour
 	{
 	}
 
- 
+	public static void failRound() {
+		// Clean all interface windows
+		cleanAllInterfaceWindows();
+		InterfaceManager.REF.inGameInterface.gameObject.SetActive(false);
+	}
 	public static void confirmTowerWindow(WWTD_Tower aTower) {
 		cleanAllInterfaceWindows();
 		GameObject g = Instantiate(Resources.Load("UI/TowerPlacement/ConfirmBuyTower")) as GameObject;

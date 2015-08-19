@@ -18,6 +18,7 @@ using FlightPathManager;
 using CreepSpawnerPackage;
 using System.Collections;
 using UnityStandardAssets.Characters.ThirdPerson;
+using Creep;
 
 
 namespace UnitScripts
@@ -40,7 +41,13 @@ namespace UnitScripts
 		public GameObject hudTextPrefab;
 		public HUDText mText;
 
+		public ETargetType unitType;
+
+
 		public float unitSpeed = 1f;
+
+		public float originalSpeed = 1f;
+		public int slowTimeRemaining = 0;
 		public float value = 1f;
 
 		public GameObject[] deathParticles;
@@ -66,14 +73,30 @@ namespace UnitScripts
 				GameObject exit = GameObject.Find("CreepExit");
 				u.MoveTo(exit.transform.position,false);
 			}
-
-			GameObject child = NGUITools.AddChild(CreepSpawner.hudRoot, this.hudTextPrefab);
-			mText = child.GetComponent<HUDText>();
+			if(!GameManager.REF.demo) {
+				GameObject child = NGUITools.AddChild(CreepSpawner.hudRoot, this.hudTextPrefab);
+				mText = child.GetComponent<HUDText>();
 			
-			// Make the UI follow the target
-			child.AddComponent<UIFollowTarget>().target = this.transform;
+				// Make the UI follow the target
+				child.AddComponent<UIFollowTarget>().target = this.transform;
+			}
 
+		}
 
+		public void finalDestroy() {
+			//TODO! Move this from here
+			if(this.deathExplosions.Length>0) {
+				for(int i = 0;i<this.deathExplosions.Length;i++) {
+					FastPool f = FastPoolManager.GetPool(deathExplosions[i],true);
+					
+					if(f!=null) {
+						f.TryGetNextObject(this.transform.position,Quaternion.identity);
+					}
+				}
+				deathExplosions = new GameObject[0];
+			}
+			
+			
 		}
 		private void setupUnit() {
 			for(int i = 0;i<CreepsList.Instance.Rows.Count;i++) {
@@ -84,6 +107,7 @@ namespace UnitScripts
 					this.flying = r._IsFlying;
 					this.value = r._Value;
 					this.unitSpeed = r._UnitSpeed; 
+					this.originalSpeed = unitSpeed;
 					applyUnitStats();
 				}
 			}  
@@ -100,11 +124,17 @@ namespace UnitScripts
 				f.moveSpeed = this.unitSpeed;
 			}
 		}
-		public void hitUnit(float aDamage,float aDamageInfantryMultiplier,float aDamageMachineMultiplier) {
+		public void hitUnit(float aDamage,float aDamageInfantryMultiplier,float aDamageMachineMultiplier,float aSlowPercent,int aSlowTime,ETargetType aSlowTarget) {
 
 			if(this.health>0f) {
+				if(this.unitType==ETargetType.Infantry) {
+					aDamage = aDamage*aDamageInfantryMultiplier;
+				}
+				if(this.unitType==ETargetType.Mechanical||this.unitType==ETargetType.FlyingMechanical) {
+					aDamage = aDamage*aDamageMachineMultiplier;
+				}
 				this.health -= aDamage;
-				if(energyBar==null) {
+				if(energyBar==null&&!GameManager.REF.demo) {
 					GameObject eb = this.gameObject;
 					eb = healthBarPool.FastInstantiate(GameObject.Find ("Canvas").transform);
 					energyBar = eb.GetComponent<EnergyBar>();
@@ -119,22 +149,46 @@ namespace UnitScripts
 					energyBar.SetValueMax(Convert.ToInt32(health+aDamage));
 					
 				}
-				this.energyBar.SetValueCurrent((int) this.health);
+				if(energyBar!=null)
+					this.energyBar.SetValueCurrent((int) this.health);
 			}
-		}
 
-		public void OnDestroy() {
-			//TODO! Move this from here
-			if(this.deathExplosions.Length>0&&this.health<0f&&destroying) {
-				for(int i = 0;i<this.deathExplosions.Length;i++) {
-					FastPool f = FastPoolManager.GetPool(deathExplosions[i],true);
+			if(this.health>=0f) {
+				// If we still have health, do we want to slow this unit?
+				if(aSlowTime>0) {
+					Debug.Log(unitType+" - "+aSlowTarget);
+					ETargetType thisT = (this.unitType&aSlowTarget);
+					Debug.Log (thisT);
+					if(thisT==this.unitType) {
+						slowTimeRemaining += aSlowTime;
+						this.unitSpeed = this.originalSpeed * aSlowPercent;
 
-					if(f!=null) {
-						f.TryGetNextObject(this.transform.position,Quaternion.identity);
+						updateSpeeds();
 					}
 				}
-				deathExplosions = new GameObject[0];
 			}
+		}
+		public void updateSpeeds() {
+			if(this.GetComponent<HumanoidSpeedComponent>()!=null) {
+				this.GetComponent<HumanoidSpeedComponent>().runSpeed = this.unitSpeed;
+				this.GetComponent<HumanoidSpeedComponent>().walkSpeed = this.unitSpeed;
+				this.GetComponent<HumanoidSpeedComponent>().Walk();
+			}
+			if(this.GetComponent<FlightPathFollower>()!=null) {
+				this.GetComponent<FlightPathFollower>().moveSpeed = this.unitSpeed;
+			}
+		}
+		public void FixedUpdate() {
+			if(this.slowTimeRemaining>0) {
+				this.slowTimeRemaining --;
+				if(this.slowTimeRemaining==0) {
+					this.unitSpeed = this.originalSpeed;
+					this.updateSpeeds();
+
+				}
+			}
+		}
+		public void OnDestroy() {
 
 			if(energyBar!=null) {
 				this.energyBar.GetComponent<EnergyBarFollowObject>().followObject = null;
@@ -170,6 +224,7 @@ namespace UnitScripts
 				for(int i = 0;i<rs.Length;i++) {
 					Destroy(rs[i]);
 				}
+				finalDestroy();
 
 			}
 			
@@ -182,14 +237,16 @@ namespace UnitScripts
 					this.energyBar.SetValueCurrent((int) this.health);
 				if ( health <= 0 && !destroying ) {
 				
-					
-					mText.Add((int) this.value,Color.green,1f);
-					GameManager.REF.usersCash += (int) this.value;
+					if(mText) {	
+						mText.Add((int) this.value,Color.green,1f);
+						GameManager.REF.usersCash += (int) this.value;
+					}
 					StartCoroutine(startDestroying());
 					destroying = true;
 				}
 				if(Vector3.Distance(exit.position,this.transform.position)<exitThreshold) {
 					Destroy(this.gameObject);
+					GameManager.REF.creepEscape();
 				} 
 			}
 		}
