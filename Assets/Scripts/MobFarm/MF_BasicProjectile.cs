@@ -58,7 +58,6 @@ public class MF_BasicProjectile : MonoBehaviour {
 					DoSplashHit(g[i],this.splashDamage*this.damage);
 				}
 			}  
-			
 		}
 	}
 	public virtual void OnDisable() {

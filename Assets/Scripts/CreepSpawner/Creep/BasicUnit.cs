@@ -203,8 +203,8 @@ namespace UnitScripts
 					deathParticles[i].gameObject.SetActive(true);
 				}
 			}
-		
-			Destroy(mText.GetComponent<UIFollowTarget>());
+			if(mText!=null)
+				Destroy(mText.GetComponent<UIFollowTarget>());
 			this.tag = "Dead";
 			if(this.flying) {
 				this.GetComponent<FlightPathFollower>().dieTarget();
